@@ -28,9 +28,5 @@ This JSUI object for Max8 provides an interactive interface for recording data i
 - The data is expected to be sent as a `list` to the JSUI object.
 
 ## Author
+Itsuki Doi
 
-[Your Name Here]
-
-## License
-
-[Your License Here]
