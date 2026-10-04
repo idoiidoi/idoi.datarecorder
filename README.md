@@ -1,32 +1,105 @@
 # idoi.datarecorder
 
-## Description
+Records incoming lists to timestamped CSV files from Max, for example data
+from external sensors. Built on `v8ui`. Pairs well with
+[idoi.plotter](https://github.com/idoiidoi/idoi.plotter).
 
-This JSUI object for Max8 provides an interactive interface for recording data into CSV files. It offers a visual representation to indicate the recording status and a simple mechanism to start and stop the recording.
+Requires **Max 9** or later (`v8ui`). The previous `jsui` version (Max 8) is
+in the git history at tag `v1-jsui`.
 
-## Features
+## Install
 
-- **Interactive UI:** The JSUI displays a red circle when it's ready to record and turns into a green rectangle during the recording.
-- **Timestamps:** Each data entry is prefixed with a UNIX timestamp.
-- **Dynamic CSV Naming:** The generated CSV files are named based on the current date and time to ensure uniqueness.
-- **External Control:** The JSUI responds to `1` for starting the recording, `0` for stopping, and also to a `clear` message to reset the folder selection.
+Clone (or download) this repository into your Max packages folder and restart Max:
 
-## Usage
+```bash
+git clone https://github.com/idoiidoi/idoi.datarecorder.git ~/Documents/Max\ 9/Packages/idoi.datarecorder
+```
 
-1. **Directory Selection:** Click on the JSUI object to select the directory where the CSV files will be saved.
-2. **Start Recording:** Send a `1` to the JSUI object or click on it when it displays a red circle.
-3. **Stop Recording:** Send a `0` to the JSUI object or click on it while it's recording (green rectangle is displayed).
-4. **Reset Directory Selection:** Send a `clear` message to the JSUI object.
+Then create the object by typing into an object box:
 
-## Methods
+```
+v8ui @filename idoi.datarecorder.js
+```
 
-- **`setFolderPath(path)`**: Manually set the folder path where the CSV files will be saved.
+Option-click (Alt-click) it to open the help patch.
 
-## Limitations
+## Recording
 
-- The JSUI object requires a manual directory selection before starting the recording.
-- The data is expected to be sent as a `list` to the JSUI object.
+Click the object (red circle) to start, click again (green square) to stop.
+While recording it shows the elapsed time, row count and file name.
 
-## Author
-Itsuki Doi
+Every `list`, `float`, `int` or other message that arrives while recording
+becomes one row. A message like `marker take1` is written as
+`...,marker,take1`, which is handy for annotating events.
 
+```
+unix_ms,elapsed_ms,ch0,ch1
+1791123637298,0,0.9774,0.558
+1791123637330,32,0.9656,0.145
+1791123637735,437,marker,take1
+```
+
+- Files are named `<prefix>YYYYMMDD_HHMMSS.csv`. If that name already exists, `_2`, `_3`, ... is appended, so nothing is overwritten.
+- The header row is written when the first row arrives, sized to that row.
+- Data is buffered and written every 250 ms. Stopping, or closing/deleting the object while recording, writes the rest and closes the file.
+- Timestamps are taken when the message reaches the object (main thread), in milliseconds.
+
+## Messages
+
+| Message | Effect |
+| --- | --- |
+| `record 1` / `record 0` | Start / stop. `record` with no argument toggles. |
+| `start`, `stop` | Same as above. |
+| `clear` | Stop, and unset `folder`. |
+
+## Attributes
+
+Set in the inspector, as `@name value` in the object box, or by sending
+`name value`. They are saved with the patcher.
+
+| Attribute | Default | Description |
+| --- | --- | --- |
+| `folder` | – | Where files go. Unset: next to the patcher, or `~/Documents` if the patcher is unsaved. A missing folder is reported as an error instead of writing elsewhere. |
+| `prefix` | – | File name prefix, e.g. `take_`. |
+| `columns` | – | Header names for the data columns. Missing names become `ch0`, `ch1`, ... |
+| `header` | 1 | Write a header row. |
+| `elapsed` | 1 | Add an `elapsed_ms` column (ms since the recording started). |
+
+To pick a folder with a dialog: `[opendialog fold]` → `[prepend folder]` → recorder.
+
+## Output
+
+| Message | When |
+| --- | --- |
+| `file <path>` | A recording started. |
+| `recording 1` / `recording 0` | Started / stopped. |
+| `rows <n>` | Rows written, on stop. |
+| `error <text>` | The folder is missing or the file cannot be opened. |
+
+## Changes from the jsui version
+
+- **`1` / `0` are now data, not start/stop.** Use `record $1` between a toggle and the recorder. (In the jsui version a single integer channel could not be recorded.)
+- A folder no longer has to be chosen first.
+- Recordings started in the same second no longer overwrite each other.
+- The file is closed when the patcher closes while recording.
+- `setFolderPath` still works as an alias of `folder`.
+
+## Development
+
+The file- and drawing-independent code (CSV formatting, file naming, chunked
+writes) is in `javascript/idoi.datarecorder.core.js` and has unit tests that
+run in plain node:
+
+```bash
+node --test test/*.test.js
+```
+
+Max's `File.writestring()` silently truncates strings longer than 32767
+characters, so writes are chunked below that.
+
+The help patch is generated by `tools/make_help.py`; edit that script instead
+of the `.maxhelp` file and run `python3 tools/make_help.py`.
+
+## License
+
+MIT

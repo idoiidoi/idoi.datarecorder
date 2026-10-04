@@ -1,0 +1,10 @@
+{
+	"name": "idoi.datarecorder",
+	"displayname": "idoi.datarecorder",
+	"version": "2.0.0",
+	"author": "Itsuki Doi",
+	"description": "Record incoming lists to timestamped CSV files (v8ui)",
+	"website": "https://github.com/idoiidoi/idoi.datarecorder",
+	"max_version_min": "9.0",
+	"tags": ["recording", "csv", "sensor", "v8ui"]
+}
