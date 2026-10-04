@@ -1,5 +1,9 @@
 # idoi.datarecorder
 
+> **Moved:** idoi.datarecorder is now part of [idoi.sensorkit](https://github.com/idoiidoi/idoi.sensorkit),
+> a Max 9 package with idoi.calibrate, idoi.plotter, idoi.datarecorder and idoi.dataplayer.
+> This repository is archived and no longer updated.
+
 Records incoming lists to timestamped CSV files from Max, for example data
 from external sensors. Built on `v8ui`. Pairs well with
 [idoi.plotter](https://github.com/idoiidoi/idoi.plotter).
